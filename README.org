@@ -1,0 +1,16 @@
+* Machine Learning Morse Code decoder
+
+Automatic decoding of morse code is notoriously difficult. It works
+well if there's high SNR and the morse is machine generated, but hand
+generated morse often has irregularities which make decoding
+difficult.
+
+This is an experiment to see whether similar techniques to speech
+recognition will work for morse code.
+
+** generate
+This is to generate the training data. Many thanks to AG1LE for this.
+
+I have modified this to include irregularities in lengths of 'dits',
+'dahs', and spaces, as humans might send.
+
