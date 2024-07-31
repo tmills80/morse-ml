@@ -312,7 +312,7 @@ def generate_dataset(config):
                             phrase, audio_file, None, 600, 8000, speed,
                             length_seconds, length_seconds + 4, False)
                         m.audio()
-                        mf.write(audio_file+'|'+phrase+'|\n')
+                        mf.write(audio_file+',"'+phrase+'"\n')
                         wordcount += 1
                     except Exception as err:
                         print(f"ERROR: {audio_file} {err}")

@@ -1,6 +1,6 @@
 model:
   directory: "/home/tristan/morse-code/model/"
-  fnTrain: "labels.txt"
+  fnTrain: "labels.csv"
   fnAudio: "data/"
 
 generator:
