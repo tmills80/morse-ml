@@ -1,10 +1,10 @@
 model:
-  directory: "~/morse/model/"
+  directory: "/home/tristan/morse-code/model/"
   fnTrain: "labels.txt"
   fnAudio: "data/"
 
 generator:
-  corpus: "~/morse/generator/corpus.txt"
+  corpus: "/home/tristan/morse-code/generate/corpus.txt"
   code_speed:
     - 5
     - 10

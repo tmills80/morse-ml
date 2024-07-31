@@ -15,7 +15,7 @@ import os
 class Config():
     def __init__(self, file_name):
         with open(file_name) as f:
-            self.config = yaml.load(f.read())
+            self.config = yaml.safe_load(f.read())
 
     def value(self, key):
         return reduce(lambda c, k: c[k], key.split('.'), self.config)
@@ -202,7 +202,7 @@ class Morse():
             noise_power = power/SNR_linear
             noise = np.sqrt(noise_power) * \
                 np.random.normal(0, 1, len(self.morsecode))
-        self.morsecode = noise + self.morsecode
+            self.morsecode = noise + self.morsecode
 
     def pad_start(self):
         dit = 1.2/self.code_speed  # dit duration in seconds
@@ -276,14 +276,14 @@ def generate_dataset(config):
     "generate audio dataset from a corpus of words"
     directory = config.value('model.directory')
     corpus_file = config.value('generator.corpus')
-    fnTrain = config.value('model.fnTrain')
-    fnAudio = config.value('model.fnAudio')
+    fnTrain = directory + "/" + config.value('model.fnTrain')
+    fnAudio = directory + "/" + config.value('model.fnAudio')
     code_speed = config.value('generator.code_speed')
     length_seconds = config.value('generator.length_seconds')
     error_counter = 0
 
     try:
-        os.makedirs(directory)
+        os.makedirs(fnAudio, exist_ok=True)
     except OSError:
         print("Error: cannot create ", directory)
 
@@ -294,7 +294,9 @@ def generate_dataset(config):
         # generate training material in all WPM speeds in the list
         for speed in code_speed:
             wordcount = 0
-            with Morse(text, code_speed=speed) as m1, open(fnTrain, 'w') as mf:
+            with (Morse(text, code_speed=speed, length_seconds=length_seconds,
+                        total_seconds=length_seconds+4) as m1,
+                  open(fnTrain, 'w') as mf):
                 for line, duration in m1.generate_fragments():
                     # remove extra characters
                     phrase = re.sub(r'[\'&/\n]', '', line)
@@ -308,7 +310,7 @@ def generate_dataset(config):
                     try:
                         m = Morse(
                             phrase, audio_file, None, 600, 8000, speed,
-                            length_seconds, 5, False)
+                            length_seconds, length_seconds + 4, False)
                         m.audio()
                         mf.write(audio_file+'|'+phrase+'|\n')
                         wordcount += 1
