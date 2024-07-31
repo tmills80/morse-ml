@@ -1,0 +1,16 @@
+model:
+  directory: "~/morse/model/"
+  fnTrain: "labels.txt"
+  fnAudio: "data/"
+
+generator:
+  corpus: "~/morse/generator/corpus.txt"
+  code_speed:
+    - 5
+    - 10
+    - 15
+    - 20
+    - 25
+    - 30
+    - 40
+  length_seconds: 10

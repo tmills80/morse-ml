@@ -25,12 +25,13 @@ class Config():
 
 
 class Morse():
-    """Generates morse audio files from text. Can add noise to desired SNR level. Add random padding """
+    """Generates morse audio files from text. Can add noise to desired
+       SNR level"""
     code = {
         '!': '-.-.--',
         '$': '...-..-',
         "'": '.----.',
-        '(': '-.--.',
+        '(': '-.--.',  # <KN>
         ')': '-.--.-',
         ',': '--..--',
         '-': '-....-',
@@ -48,13 +49,13 @@ class Morse():
         '9': '----.',
         ':': '---...',
         ';': '-.-.-.',
-        '>': '.-.-.',  # <AR>
-        '<': '.-...',     # <AS>
+        '>': '.-.-.',   # <AR>
+        '<': '.-...',   # <AS>
         '{': '....--',  # <HM>
-        '&': '..-.-',  # <INT>
+        '&': '..-.-',   # <INT>
         '%': '...-.-',  # <SK>
-        '}': '...-.',  # <VE>
-        '=': '-...-',  # <BT>
+        '}': '...-.',   # <VE>
+        '=': '-...-',   # <BT>
         '?': '..--..',
         '@': '.--.-.',
         'A': '.-',
@@ -93,28 +94,31 @@ class Morse():
     def __init__(self, text, file_name=None, SNR_dB=20, f_code=600, Fs=8000,
                  code_speed=20, length_seconds=4, total_seconds=8,
                  play_sound=True, variation=None):
-        self.text = text.upper()              # store requested text to be converted in here
-        self.file_name = file_name            # file name to store generated WAV file
+        self.text = text.upper()              # text to be converted in here
+        self.file_name = file_name            # file name of generated WAV file
         self.SNR_dB = SNR_dB                  # target SNR in dB
         self.f_code = f_code                  # CW tone frequency
         self.Fs = Fs                          # Sampling frequency
         self.code_speed = code_speed          # code speed in WPM
         # caps the CW generation to this length in seconds
         self.length_seconds = length_seconds
-        self.total_seconds = total_seconds    # pads to the total length if possible
-        self.play_sound = play_sound          # If true, play the generated audio
-        self.variation = variation            # max variation of component length
-        
+        self.total_seconds = total_seconds    # pads to the total length
+        self.play_sound = play_sound          # If true, play the audio
+        # max variation of component length
+        self.variation = variation
+
         self.len = self.len_str_in_dits(self.text)
         self.morsecode = []  # store audio representation here
         self.t = np.linspace(0., 1.2/self.code_speed, num=int(self.Fs *
-                             1.2/self.code_speed), endpoint=True, retstep=False)
+                             1.2/self.code_speed), endpoint=True,
+                             retstep=False)
         print(self.t.shape)
         self.Dit = np.sin(2*np.pi*self.f_code*self.t)
         self.ssp = np.zeros(len(self.Dit))
         # one Dah of time is 3 times  dit time
         self.t2 = np.linspace(0., 3*1.2/self.code_speed, num=3 *
-                              int(self.Fs*1.2/self.code_speed), endpoint=True, retstep=False)
+                              int(self.Fs*1.2/self.code_speed), endpoint=True,
+                              retstep=False)
         # Dah = np.concatenate((Dit,Dit,Dit))
         self.Dah = np.sin(2*np.pi*self.f_code*self.t2)
         self.lsp = np.zeros(len(self.Dah))
@@ -151,6 +155,15 @@ class Morse():
         len_in_dits = self.len_str_in_dits(s)
         return dit*len_in_dits
 
+    def add_variation(self, element, repeats=1):
+        var = random.uniform(-self.variation, self.variation)
+        diff = math.floor(math.fabs(len(self.Dit) * repeats * var))
+        if var < 0:
+            self.morsecode = self.morsecode[:-diff]
+        else:
+            self.morsecode = np.concatenate(
+                (self.morsecode, element[:diff]))
+
     def generate_audio(self):
         for ch in self.text:
             s = Morse.code[ch]
@@ -159,54 +172,32 @@ class Morse():
                     self.morsecode = np.concatenate((self.morsecode, self.Dit))
 
                     if self.variation:
-                        var = random.uniform(-self.variation, self.variation)
-                        diff = math.floor(math.fabs(len(self.Dit) * var))
-                        if var < 0:
-                            self.morsecode = self.morsecode[:-diff]
-                        else:
-                            self.morsecode = np.concatenate(
-                                (self.morsecode, self.Dit[:diff]))
+                        self.add_variation(self.Dit)
                 elif el == '-':
                     self.morsecode = np.concatenate((self.morsecode, self.Dah))
 
                     if self.variation:
-                        var = random.uniform(-self.variation, self.variation)
-                        diff = math.floor(math.fabs(len(self.Dah) * var))
-                        if var < 0:
-                            self.morsecode = self.morsecode[:-diff]
-                        else:
-                            self.morsecode = np.concatenate(
-                                (self.morsecode, self.Dah[:diff]))
-
+                        self.add_variation(self.Dah)
                 elif el == '_':
                     self.morsecode = np.concatenate(
                         (self.morsecode, self.ssp, self.ssp, self.ssp))
 
                     if self.variation:
-                        var = random.uniform(-self.variation, self.variation)
-                        diff = math.floor(math.fabs(len(self.ssp)*3 * var))
-                        if var < 0:
-                            self.morsecode = self.morsecode[:-diff]
-                        else:
-                            self.morsecode = np.concatenate(
-                                (self.morsecode, self.ssp[:diff]))
+                        self.add_variation(self.ssp, 3)
 
                 self.morsecode = np.concatenate((self.morsecode, self.ssp))
                 if self.variation:
-                    var = random.uniform(-self.variation, self.variation)
-                    diff = math.floor(math.fabs(len(self.ssp) * var))
-                    if var < 0:
-                        self.morsecode = self.morsecode[:-diff]
-                    else:
-                        self.morsecode = np.concatenate(
-                            (self.morsecode, self.ssp[:diff]))
+                    self.add_variation(self.ssp)
 
             self.morsecode = np.concatenate(
                 (self.morsecode, self.ssp, self.ssp))
 
+            if self.variation:
+                self.add_variation(self.ssp, 2)
+
     def SNR(self):
         if self.SNR_dB is not None:
-            SNR_linear = 10.0**(self.SNR_dB/10.0)
+            SNR_linear = 10.0 ** (self.SNR_dB/10.0)
             power = self.morsecode.var()
             noise_power = power/SNR_linear
             noise = np.sqrt(noise_power) * \
@@ -218,8 +209,8 @@ class Morse():
         txt_dits = self.len  # calculate the length of text in dit units
         tot_len = txt_dits * dit  # calculate total text length in seconds
         if (self.length_seconds - tot_len < 0):
-            raise ValueError(
-                f"text length {tot_len:.2f} exceeds audio length {self.length_seconds:.2f}")
+            raise ValueError(f"text length {tot_len:.2f} exceeds audio length"
+                             f"{self.length_seconds:.2f}")
         # calculate how many dits will fit in with the text
         pad_dits = int((self.length_seconds - tot_len)/dit)
         # pad with random space to fit proper length
@@ -258,7 +249,8 @@ class Morse():
             print(f"in __exit__:{exc_type} {exc_value} {traceback}")
 
     def generate_fragments(self):
-        """ Yield string fragments shorter than self.length_seconds until end of self.text"""
+        """ Yield string fragments shorter than self.length_seconds until end
+        of self.text"""
         mybuf = ''
         for nextchar in self.text:
             mybuf += nextchar
@@ -269,10 +261,11 @@ class Morse():
                 yield mybuf[:-1], self.len_str_in_secs(mybuf[:-1])
                 mybuf = nextchar
             elif len_str_in_secs < 0.:
-                raise ValueException(
-                    "ERROR: parse_string should never have negative length strings")
+                raise ValueError('ERROR: parse_string should '
+                                 'never have negative length strings')
 
         yield mybuf[:], self.len_str_in_secs(mybuf[:])
+
 
 # 24487 words in alphabetical order
 # https://svnweb.freebsd.org/csrg/share/dict/words?view=co&content-type=text/plain
@@ -281,19 +274,12 @@ class Morse():
 
 def generate_dataset(config):
     "generate audio dataset from a corpus of words"
-    URL = "https://svnweb.freebsd.org/csrg/share/dict/words?view=co&content-type=text/plain"
-    directory = "/home/tristan/morse-code/generate/" #config.value('model.directory')
-    corpus_file = "/home/tristan/morse-code/generate/corpus.txt" #config.value('model.corpus')
- #   filePath = config.value('model.name')
-    fnTrain = "X" #config.value('morse.fnTrain')
-    fnAudio = "Y" #config.value('morse.fnAudio')
-    code_speed = [20] #config.value('morse.code_speed')
-    SNR_DB = [40] # config.value('morse.SNR_dB')
-  #  count = config.value('morse.count')
-    length_seconds = 4 #config.value('morse.length_seconds')
-    # word_max_length = config.value('morse.word_max_length')
-    # words_in_sample = config.value('morse.words_in_sample')
-    print("SNR_DB:{}".format(SNR_DB))
+    directory = config.value('model.directory')
+    corpus_file = config.value('generator.corpus')
+    fnTrain = config.value('model.fnTrain')
+    fnAudio = config.value('model.fnAudio')
+    code_speed = config.value('generator.code_speed')
+    length_seconds = config.value('generator.length_seconds')
     error_counter = 0
 
     try:
@@ -303,9 +289,10 @@ def generate_dataset(config):
 
     wordcount = 0
     with open(corpus_file) as corpus:
-        #words = corpus.read().split("\n")
+        # words = corpus.read().split("\n")
         text = corpus.read()
-        for speed in code_speed:  # generate training material in all WPM speeds in the list
+        # generate training material in all WPM speeds in the list
+        for speed in code_speed:
             wordcount = 0
             with Morse(text, code_speed=speed) as m1, open(fnTrain, 'w') as mf:
                 for line, duration in m1.generate_fragments():
@@ -314,13 +301,14 @@ def generate_dataset(config):
                     if len(phrase) <= 1:
                         continue
                     print(
-                        f"speed:{speed} of {len(code_speed)} phrase:{phrase} dur:{duration}")
-                    SNR = random.sample(SNR_DB, 1)
-                    audio_file = "{}SNR{}WPM{}-{}.wav".format(
-                        fnAudio, SNR[0], speed, uuid.uuid4().hex)
+                        f"speed:{speed} of {len(code_speed)} phrase:{phrase} "
+                        f"dur:{duration}")
+                    audio_file = "{}WPM{}-{}.wav".format(
+                        fnAudio, speed, uuid.uuid4().hex)
                     try:
                         m = Morse(
-                            phrase, audio_file, SNR[0], 600, 8000, speed, length_seconds, 5, False)
+                            phrase, audio_file, None, 600, 8000, speed,
+                            length_seconds, 5, False)
                         m.audio()
                         mf.write(audio_file+'|'+phrase+'|\n')
                         wordcount += 1
@@ -328,8 +316,8 @@ def generate_dataset(config):
                         print(f"ERROR: {audio_file} {err}")
                         error_counter += 1
                         continue
-                print(
-                    f"completed {wordcount} files for speed:{speed}, with {error_counter} errors")
+                print(f"completed {wordcount} files for speed:{speed}, "
+                      f"with {error_counter} errors")
 
 
 def main(argv):
