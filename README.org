@@ -14,3 +14,8 @@ This is to generate the training data. Many thanks to AG1LE for this.
 I have modified this to include irregularities in lengths of 'dits',
 'dahs', and spaces, as humans might send.
 
+
+*** TODO better corpus text
+Currently this only has words.  It would be better to use something
+like QSO text for more characters, and to use for training a language
+model if desired.
