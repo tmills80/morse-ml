@@ -9,6 +9,11 @@ scipy = "*"
 sounddevice = "*"
 pyyaml = "*"
 sox = "*"
+torch = "*"
+torchaudio = "*"
+pandas = "*"
+matplotlib = "*"
+librosa = "*"
 
 [dev-packages]
 
